@@ -2,7 +2,18 @@
 #include "utils.h"
 
 volatile float finaDutyCycle = 0;    //Global variable for calculate duty cycle
-volatile uint8_t millisCounter = 0;  //Count millis for PID
+
+//Temperature calculation variables
+float tempCoeffs[4] = {9.418, -40.978, 95.315, -28.127}; //Coeffs for third-order equation for calculating temp value
+volatile uint32_t ADCVal   = 0;
+volatile float voltageVal  = 0;
+volatile float tempVal     = 0;
+
+//PID calculation variables
+float currentError      = 0;
+float previousError     = 0;
+float integralError     = 0;
+float diffError         = 0;
 
 void RCCInit(){
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;     //ADC1 activation
@@ -22,22 +33,23 @@ void GPIOAInit(){
 void TIM3Init(){
     TIM3->CR1 |= TIM_CR1_CEN;           //Enable TIM3
     TIM3->PSC = TIM3_PSC - 1;           //Set TIM3 prescalser: look into utils.h file
-    TIM3->ARR = TIM3_ARR - 1;           //Set TIM3 arr: look into utils.h file
+    TIM3->ARR = TIM3_ARR - 1;           //Set TIM3 arr: check out utils.h file for values
     TIM3->CNT = 0;                      //Set TIM3 counter 
     TIM3->CCMR1 |= TIM_CCMR1_OC1M_1     //Enable PWM generation on TIM3 Channel1 
                  | TIM_CCMR1_OC1M_2;
     TIM3->CCER |= TIM_CCER_CC1E;        //Enable capture/compare register
-    TIM3->CCR1 = TIM3_ARR/2 - 1;        //Capture/compare value (informally - duty cycle) set to 50%    
+    TIM3->CCR1 = TIM3_ARR/2 - 1;        //Capture/compare value (informally - duty cycle) set to 50%. Changes between 0 and TIM3_ARR    
     // TIM3->DIER |= TIM_DIER_UIE;         //TIM3 interrupt enable
     // NVIC_EnableIRQ(TIM3_IRQn);
 }
 
 void TIM4Init(){
-    TIM4->CR1 |= TIM_CR1_CEN;
-    TIM4->PSC |= TIM4_PSC - 1;
-    TIM4->ARR |= TIM4_ARR - 1;
-    TIM4->CNT = 0;
-    TIM4->DIER = TIM_DIER_UIE;
+    TIM4->CR1 |= TIM_CR1_CEN;   //Enable TIM4
+    TIM4->PSC |= TIM4_PSC - 1;  //Set TIM4 prescaler
+    TIM4->ARR |= TIM4_ARR - 1;  //Set TIM4 arr: check out utils.h file for values
+    TIM4->CNT = 0;              //Set TIM4 counter
+    TIM4->DIER = TIM_DIER_UIE;  //Enable interrupt
+    NVIC_EnableIRQ(TIM4_IRQn);
 }
 
 void ADC1Init(){
@@ -46,6 +58,7 @@ void ADC1Init(){
     ADC1->CR2 |= ADC_CR2_SWSTART;   //Start conversion of regular channels
 }
 
+//Check if calculated duty cycle value is in bounds, otherwise sets bound value
 void checkDutyCycleLimits(float* dutyCycle){
     if(*dutyCycle < 0){
         *dutyCycle = 0;
@@ -60,42 +73,15 @@ int main(){
     RCCInit();
     GPIOAInit();
     TIM3Init();
+    TIM4Init();
     ADC1Init();
 
-    //Temperature calculation variables
-    float tempCoeffs[4] = {9.418, -40.978, 95.315, -28.127}; //Coeffs for third-order equation for calculating temp value
-    volatile uint32_t val      = 0;
-    volatile float voltageVal  = 0;
-    volatile float tempVal     = 0;
-
-    //PID calculation variables
-    float currentError      = 0;
-    float previousError     = 0;
-    float integralError     = 0;
-    float diffError         = 0;
-    float secondsCounter    = 0;
-
     for(;;){
-        val = ADC1->DR;
-        voltageVal = REF_VOLTAGE*val/MAX_ADC_VALUE;
+        ADCVal = ADC1->DR;
+        voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
         tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
-    
-        secondsCounter = millisCounter/1000;
-        currentError = AIM_TEMP - tempVal;
-
-        //Check if intergral error between min and max duty cycle value
-        if(((K_I * integralError <= TIM3_ARR) && currentError >= 0) || 
-            ((K_I * integralError >= 0) && currentError < 0)){
-                integralError += currentError * secondsCounter;
-        }
-        diffError = (currentError - previousError)/secondsCounter;
-        finaDutyCycle = K_P * currentError + K_I * integralError + K_E * diffError;
-
-        checkDutyCycleLimits(&finaDutyCycle);
-        previousError = currentError;
-        millisCounter = 0;
-    
     }
+
     return 0;
 }
 
@@ -105,5 +91,16 @@ void TIM3_IRQHandler(){
 }
 
 void TIM4_IRQHandler(){
+    TIM4->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
+    currentError = AIM_TEMP - tempVal;
+    //Check if intergral error between min and max duty cycle value
+    if(((K_I * integralError <= TIM3_ARR) && currentError >= 0) || 
+        ((K_I * integralError >= 0) && currentError < 0)){
+            integralError += currentError * dT;
+    }
+    diffError = (currentError - previousError)/dT;
+    finaDutyCycle = K_P * currentError + K_I * integralError + K_E * diffError;
 
+    checkDutyCycleLimits(&finaDutyCycle);
+    previousError = currentError;
 }
