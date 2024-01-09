@@ -10,10 +10,10 @@ volatile float voltageVal  = 0;
 volatile float tempVal     = 0;
 
 //PID calculation variables
-float currentError      = 0;
-float previousError     = 0;
-float integralError     = 0;
-float diffError         = 0;
+volatile float currentError      = 0;
+volatile float previousError     = 0;
+volatile float integralError     = 0;
+volatile float diffError         = 0;
 
 void RCCInit(){
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;     //ADC1 activation
@@ -25,8 +25,8 @@ void RCCInit(){
 void GPIOAInit(){
     GPIOA->MODER |= GPIO_MODER_MODE0;   //Enable analog mode for PA0 pin
     GPIOA->MODER |= GPIO_MODER_MODE6_1; //Enable alternate function mode for PA6 
+    GPIOA->MODER |= GPIO_MODER_MODE1_0; //Enable general purpose output mode for PA1
     GPIOA->AFR[0]|= GPIO_AFRL_AFRL6_1;  //Enable alternate function register for PA6 pin, TIM3 CH1 PWM mode
-    GPIOA->MODER |= GPIO_MODER_MODE1_0; //Enable general purpose output mode PA1
     GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
 }
 
@@ -39,8 +39,6 @@ void TIM3Init(){
                  | TIM_CCMR1_OC1M_2;
     TIM3->CCER |= TIM_CCER_CC1E;        //Enable capture/compare register
     TIM3->CCR1 = TIM3_ARR/2 - 1;        //Capture/compare value (informally - duty cycle) set to 50%. Changes between 0 and TIM3_ARR    
-    // TIM3->DIER |= TIM_DIER_UIE;         //TIM3 interrupt enable
-    // NVIC_EnableIRQ(TIM3_IRQn);
 }
 
 void TIM4Init(){
@@ -68,7 +66,7 @@ void checkDutyCycleLimits(float* dutyCycle){
     }
 }
 
-int main(){
+  int main(){
     //Peripheral initialization
     RCCInit();
     GPIOAInit();
@@ -80,14 +78,16 @@ int main(){
         ADCVal = ADC1->DR;
         voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
         tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
+        //If aim temperature is achieved switch off heating Peltier element, otherwise enable
+        if(tempVal > AIM_TEMP){
+            GPIOA->BSRR  |= GPIO_BSRR_BR1;      //Set PA1 output to low
+        }
+        if(tempVal <= AIM_TEMP){
+            GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
+        }
     }
 
     return 0;
-}
-
-void TIM3_IRQHandler(){
-    TIM3->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
-    TIM3->CCR1 = finaDutyCycle; //Update duty cycle
 }
 
 void TIM4_IRQHandler(){
@@ -98,9 +98,10 @@ void TIM4_IRQHandler(){
         ((K_I * integralError >= 0) && currentError < 0)){
             integralError += currentError * dT;
     }
-    diffError = (currentError - previousError)/dT;
+    diffError = (currentError - previousError)/dT;    
     finaDutyCycle = K_P * currentError + K_I * integralError + K_E * diffError;
 
     checkDutyCycleLimits(&finaDutyCycle);
+    TIM3->CCR1 = finaDutyCycle; //Update duty cycle
     previousError = currentError;
 }
