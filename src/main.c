@@ -72,37 +72,22 @@ void checkDutyCycleLimits(float* dutyCycle){
     }
 }
 
-//Function wich toggles PA1 pin to switch Peltier mode to heat/cool
+//Function wich toggles PA1 pin to switch Peltier mode to heat/cool. 0 - cooling, 1 - heating status flags
 void switchPeltier(){
     if(peltierHeatCoolFlag){                //Cooling mode
-        GPIOA->BSRR  &= ~GPIO_BSRR_BS1;
+        GPIOA->BSRR  &= ~GPIO_BSRR_BS1;     //Switch PA1 to low mode
         GPIOA->BSRR  |= GPIO_BSRR_BR1;
-        aimTemperature = AIM_TEMP_LOWER;
-        peltierHeatCoolFlag = 0;
-        tempFlag = 0;
+        aimTemperature = AIM_TEMP_LOWER;    //Set lower temp bound for cooling
+        peltierHeatCoolFlag = 0;            //Set local flag to cooling mode
     }else{                                  //Heating mode
-        GPIOA->BSRR  &= ~GPIO_BSRR_BR1;
+        GPIOA->BSRR  &= ~GPIO_BSRR_BR1;     //Switch PA1 to high mode
         GPIOA->BSRR  |= GPIO_BSRR_BS1; 
-        aimTemperature = AIM_TEMP_UPPER;
-        peltierHeatCoolFlag = 1; 
-        tempFlag = 1;
+        aimTemperature = AIM_TEMP_UPPER;    //Set upper temp bound for cooling
+        peltierHeatCoolFlag = 1;            //Set local flag to heating mode
     }
 }
 
-//This function checks current temperature status. If upper bound is achieved Peltier is switched to cooling and vise versa
-void isTempBoundAchieved(float* temperature){
-    //If aim temperature is achieved switch off heating Peltier element, otherwise enable
-    if(tempVal > AIM_TEMP_UPPER){
-        GPIOA->BSRR  |= GPIO_BSRR_BR1;      //Set PA1 output to low
-        tempFlag = 1;
-    }else{
-        GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
-        tempFlag = 0;
-    }
-    return 0;
-}
-
-  int main(){
+int main(){
     //Peripheral initialization
     RCCInit();
     GPIOAInit();
@@ -120,6 +105,7 @@ void isTempBoundAchieved(float* temperature){
 
 void TIM4_IRQHandler(){
     TIM4->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
+    //Condition to check wheter temp is achieved
     if(currentError <= TEMP_DELTA){
         switchPeltier();
     }
