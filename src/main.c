@@ -58,12 +58,25 @@ void ADC1Init(){
 
 //Check if calculated duty cycle value is in bounds, otherwise sets bound value
 void checkDutyCycleLimits(float* dutyCycle){
-    if(*dutyCycle < 0){
-        *dutyCycle = 0;
+    if(*dutyCycle < TIM3_ARR * 0.4){
+        *dutyCycle = TIM3_ARR * 0.4;
     }
     if(*dutyCycle > TIM3_ARR){
         *dutyCycle = TIM3_ARR;
     }
+}
+
+//This function checks current temperature status. If upper bound is achieved Peltier is switched to cooling and vise versa
+int isTempBoundAchieved(float* temperature){
+    //If aim temperature is achieved switch off heating Peltier element, otherwise enable
+    if(tempVal > AIM_TEMP_UPPER){
+        GPIOA->BSRR  |= GPIO_BSRR_BR1;      //Set PA1 output to low
+        return 1;
+    }else{
+        GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
+        return 0;
+    }
+    return 0;
 }
 
   int main(){
@@ -78,21 +91,17 @@ void checkDutyCycleLimits(float* dutyCycle){
         ADCVal = ADC1->DR;
         voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
         tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
-        //If aim temperature is achieved switch off heating Peltier element, otherwise enable
-        if(tempVal > AIM_TEMP){
-            GPIOA->BSRR  |= GPIO_BSRR_BR1;      //Set PA1 output to low
-        }
-        if(tempVal <= AIM_TEMP){
-            GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
-        }
     }
-
     return 0;
 }
 
 void TIM4_IRQHandler(){
     TIM4->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
-    currentError = AIM_TEMP - tempVal;
+    if(isTempBoundAchieved(&tempVal)){
+        currentError = tempVal - AIM_TEMP_LOWER;
+    }else{
+        currentError = AIM_TEMP_UPPER - tempVal;
+    }
     //Check if intergral error between min and max duty cycle value
     if(((K_I * integralError <= TIM3_ARR) && currentError >= 0) || 
         ((K_I * integralError >= 0) && currentError < 0)){
