@@ -1,5 +1,6 @@
 #include "stm32f446xx.h"
 #include "utils.h"
+#include <stdlib.h>
 
 volatile float finaDutyCycle = 0;    //Global variable for calculate duty cycle
 
@@ -14,6 +15,11 @@ volatile float currentError      = 0;
 volatile float previousError     = 0;
 volatile float integralError     = 0;
 volatile float diffError         = 0;
+
+//Logical variables
+int8_t tempFlag            = 0;
+int8_t peltierHeatCoolFlag = 0;
+int8_t aimTemperature = AIM_TEMP_UPPER;
 
 void RCCInit(){
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;     //ADC1 activation
@@ -66,15 +72,32 @@ void checkDutyCycleLimits(float* dutyCycle){
     }
 }
 
+//Function wich toggles PA1 pin to switch Peltier mode to heat/cool
+void switchPeltier(){
+    if(peltierHeatCoolFlag){                //Cooling mode
+        GPIOA->BSRR  &= ~GPIO_BSRR_BS1;
+        GPIOA->BSRR  |= GPIO_BSRR_BR1;
+        aimTemperature = AIM_TEMP_LOWER;
+        peltierHeatCoolFlag = 0;
+        tempFlag = 0;
+    }else{                                  //Heating mode
+        GPIOA->BSRR  &= ~GPIO_BSRR_BR1;
+        GPIOA->BSRR  |= GPIO_BSRR_BS1; 
+        aimTemperature = AIM_TEMP_UPPER;
+        peltierHeatCoolFlag = 1; 
+        tempFlag = 1;
+    }
+}
+
 //This function checks current temperature status. If upper bound is achieved Peltier is switched to cooling and vise versa
-int isTempBoundAchieved(float* temperature){
+void isTempBoundAchieved(float* temperature){
     //If aim temperature is achieved switch off heating Peltier element, otherwise enable
     if(tempVal > AIM_TEMP_UPPER){
         GPIOA->BSRR  |= GPIO_BSRR_BR1;      //Set PA1 output to low
-        return 1;
+        tempFlag = 1;
     }else{
         GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
-        return 0;
+        tempFlag = 0;
     }
     return 0;
 }
@@ -97,11 +120,10 @@ int isTempBoundAchieved(float* temperature){
 
 void TIM4_IRQHandler(){
     TIM4->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
-    if(isTempBoundAchieved(&tempVal)){
-        currentError = tempVal - AIM_TEMP_LOWER;
-    }else{
-        currentError = AIM_TEMP_UPPER - tempVal;
+    if(currentError <= TEMP_DELTA){
+        switchPeltier();
     }
+    currentError = abs(aimTemperature - tempVal);
     //Check if intergral error between min and max duty cycle value
     if(((K_I * integralError <= TIM3_ARR) && currentError >= 0) || 
         ((K_I * integralError >= 0) && currentError < 0)){
