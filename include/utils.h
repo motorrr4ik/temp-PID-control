@@ -15,3 +15,6 @@
 #define K_I 20.0
 #define K_E 0.01
 #define dT  0.1
+
+//Sizes and hardcodes
+#define MESSAGE_SIZE 3
