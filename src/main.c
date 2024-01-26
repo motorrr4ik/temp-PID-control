@@ -10,6 +10,11 @@ volatile uint32_t ADCVal   = 0;
 volatile float voltageVal  = 0;
 volatile float tempVal     = 0;
 
+//Transfer variables
+volatile int8_t tempTransfer = 0;
+volatile uint8_t dmaMessage[3] = {0};
+volatile uint8_t messageSize = 0;
+
 //PID calculation variables
 volatile float currentError      = 0;
 volatile float previousError     = 0;
@@ -17,7 +22,6 @@ volatile float integralError     = 0;
 volatile float diffError         = 0;
 
 //Logical variables
-int8_t tempFlag            = 0;
 int8_t peltierHeatCoolFlag = 0;
 int8_t aimTemperature = AIM_TEMP_UPPER;
 
@@ -27,6 +31,7 @@ void RCCInit(){
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;     //TIM3 activation
     RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;     //TIM4 activation
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN;   //USART2 activation
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;     //DMA1 activation
 }
 
 void GPIOAInit(){
@@ -47,7 +52,20 @@ void GPIOAInit(){
 
 void USART2Init(){
     USART2->CR1 |= USART_CR1_UE;            //USART enable
-    USART2->BRR = SYSTEM_CORE_CLOCK/9600;   //Set USART speed to 9600 B/s  
+    USART2->CR1 |= USART_CR1_RE;            //USART recieve enable
+    USART2->CR1 |= USART_CR1_TE;            //USART transmit enable
+    USART2->CR3 |= USART_CR3_DMAR;          //USART DMA reading enable
+    USART2->CR3 |= USART_CR3_DMAT;          //USART DMA transmitting enable
+    USART2->BRR = SYSTEM_CORE_CLOCK/9600;  //Set USART speed   
+}
+
+void DMA1Init(){
+    DMA1_Stream6->PAR = (uint32_t)&USART2->DR;
+    DMA1_Stream6->M0AR= &dmaMessage;
+    DMA1_Stream6->NDTR= sizeof(dmaMessage);
+    DMA1_Stream6->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
+    DMA1_Stream6->CR |= DMA_SxCR_MINC;
+    DMA1_Stream6->CR |= DMA_SxCR_DIR_0;
 }
 
 void TIM3Init(){
@@ -74,6 +92,15 @@ void ADC1Init(){
     ADC1->CR2 |= ADC_CR2_ADON;      //Enable A/D converter
     ADC1->CR2 |= ADC_CR2_CONT;      //Enable continious conversion
     ADC1->CR2 |= ADC_CR2_SWSTART;   //Start conversion of regular channels
+}
+
+//Transmitting temperuter value via USART2. Temporary solution
+void transmitTemperatureValue(){
+    DMA1->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6;
+    DMA1_Stream6->CR |= DMA_SxCR_EN;
+    // while(!(DMA1_Stream6->NDTR == 0));
+    // DMA1_Stream6->CR &= ~DMA_SxCR_EN;
+    // DMA1_Stream6->NDTR= sizeof(tempVal);
 }
 
 //Check if calculated duty cycle value is in bounds, otherwise sets bound value
@@ -106,6 +133,7 @@ int main(){
     RCCInit();
     GPIOAInit();
     USART2Init();
+    DMA1Init();
     TIM3Init();
     TIM4Init();
     ADC1Init();
@@ -114,12 +142,15 @@ int main(){
         ADCVal = ADC1->DR;
         voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
         tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
+        tempTransfer = sizeof(dmaMessage);
+        messageSize = sprintf(dmaMessage, "%d\n", (int8_t)tempVal);
     }
     return 0;
 }
 
 void TIM4_IRQHandler(){
     TIM4->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
+    transmitTemperatureValue();
     //Condition to check wheter aim temp is achieved
     if(currentError <= TEMP_DELTA){
         switchPeltier();

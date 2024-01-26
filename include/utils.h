@@ -1,8 +1,8 @@
 //Peripheral macros
-#define SYSTEM_CORE_CLOCK 45000000
-#define TIM3_PSC 450
+#define SYSTEM_CORE_CLOCK 16000000
+#define TIM3_PSC 160
 #define TIM3_ARR 1000
-#define TIM4_PSC 4500
+#define TIM4_PSC 1600
 #define TIM4_ARR 1000
 
 //Logical macros
