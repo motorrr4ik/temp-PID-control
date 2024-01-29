@@ -1,3 +1,5 @@
+#ifndef UTILS
+#define UTILS
 //Peripheral macros
 #define SYSTEM_CORE_CLOCK 16000000
 #define TIM3_PSC 160
@@ -15,6 +17,4 @@
 #define K_I 20.0
 #define K_E 0.01
 #define dT  0.1
-
-//Sizes and hardcodes
-#define MESSAGE_SIZE 3
+#endif
