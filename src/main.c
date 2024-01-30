@@ -1,8 +1,6 @@
 #include "stm32f446xx.h"
 #include "utils.h"
-#include <stdlib.h>
-
-volatile float finaDutyCycle = 0;    //Global variable for calculate duty cycle
+#include "PID.h"
 
 //Temperature calculation variables
 float tempCoeffs[4] = {9.418, -40.978, 95.315, -28.127}; //Coeffs for third-order equation for calculating temp value
@@ -12,18 +10,16 @@ volatile float tempVal     = 0;
 
 //Transfer variables
 volatile int8_t tempTransfer = 0;
-volatile uint8_t dmaMessage[3] = {0};
-volatile uint8_t messageSize = 0;
+volatile uint8_t dmaMessage[3];
 
 //PID calculation variables
-volatile float currentError      = 0;
-volatile float previousError     = 0;
-volatile float integralError     = 0;
-volatile float diffError         = 0;
+pid regulator = {1,1,1,1,1};
 
 //Logical variables
-int8_t peltierHeatCoolFlag = 0;
-int8_t aimTemperature = AIM_TEMP_UPPER;
+volatile int8_t peltierHeatCoolFlag = 0;
+volatile int8_t aimTemperature = AIM_TEMP_UPPER;
+volatile uint32_t secondsCounter = 0;
+volatile float freezedDutyCycleValue = 0;
 
 void RCCInit(){
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;     //ADC1 activation
@@ -61,7 +57,7 @@ void USART2Init(){
 
 void DMA1Init(){
     DMA1_Stream6->PAR = (uint32_t)&USART2->DR;
-    DMA1_Stream6->M0AR= &dmaMessage;
+    DMA1_Stream6->M0AR= (uint32_t)&dmaMessage;
     DMA1_Stream6->NDTR= sizeof(dmaMessage);
     DMA1_Stream6->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
     DMA1_Stream6->CR |= DMA_SxCR_MINC;
@@ -94,19 +90,32 @@ void ADC1Init(){
     ADC1->CR2 |= ADC_CR2_SWSTART;   //Start conversion of regular channels
 }
 
+//Init heating for peltier element
+void startHeating(){
+    GPIOA->BSRR  &= ~GPIO_BSRR_BR1;     //Switch PA1 to high mode
+    GPIOA->BSRR  |= GPIO_BSRR_BS1; 
+    aimTemperature = AIM_TEMP_UPPER;    //Set upper temp bound for cooling
+    peltierHeatCoolFlag = 1;            //Set local flag to heating mode
+}
+
+//Calculate current temperature based on ADC value
+void calculateTemperature(){
+    ADCVal = ADC1->DR;
+    voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
+    tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
+    sprintf(dmaMessage, "%d\n", (int8_t)tempVal);
+}
+
 //Transmitting temperuter value via USART2. Temporary solution
 void transmitTemperatureValue(){
     DMA1->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6;
     DMA1_Stream6->CR |= DMA_SxCR_EN;
-    // while(!(DMA1_Stream6->NDTR == 0));
-    // DMA1_Stream6->CR &= ~DMA_SxCR_EN;
-    // DMA1_Stream6->NDTR= sizeof(tempVal);
 }
 
 //Check if calculated duty cycle value is in bounds, otherwise sets bound value
 void checkDutyCycleLimits(float* dutyCycle){
-    if(*dutyCycle < TIM3_ARR * 0.4){
-        *dutyCycle = TIM3_ARR * 0.4;
+    if(*dutyCycle < TIM3_ARR * 0.41){
+        *dutyCycle = TIM3_ARR * 0.41;
     }
     if(*dutyCycle > TIM3_ARR){
         *dutyCycle = TIM3_ARR;
@@ -128,6 +137,19 @@ void switchPeltier(){
     }
 }
 
+//If aim temperature achieved, frezee duty cycle and start counting 
+void freezeTemperatureValue(){
+    if(regulator.currentError < TEMP_DELTA){
+        secondsCounter = 0;
+        TIM3->CCR1 = ACHIEVED_TEMP_KEEPER;
+        while (secondsCounter < 60){
+            calculateTemperature();
+            transmitTemperatureValue();
+        };
+        switchPeltier();
+    }
+}
+
 int main(){
     //Peripheral initialization
     RCCInit();
@@ -137,34 +159,26 @@ int main(){
     TIM3Init();
     TIM4Init();
     ADC1Init();
-
+    SysTick_Config(SYSTEM_CORE_CLOCK);
+    startHeating();
     for(;;){
-        ADCVal = ADC1->DR;
-        voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
-        tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
-        tempTransfer = sizeof(dmaMessage);
-        messageSize = sprintf(dmaMessage, "%d\n", (int8_t)tempVal);
+        calculateTemperature();
+        transmitTemperatureValue();
+        freezeTemperatureValue();
     }
     return 0;
 }
 
 void TIM4_IRQHandler(){
     TIM4->SR &= ~TIM_SR_UIF;    //Reset interrupt flag
-    transmitTemperatureValue();
-    //Condition to check wheter aim temp is achieved
-    if(currentError <= TEMP_DELTA){
-        switchPeltier();
-    }
-    currentError = abs(aimTemperature - tempVal);
-    //Check if intergral error between min and max duty cycle value
-    if(((K_I * integralError <= TIM3_ARR) && currentError >= 0) || 
-        ((K_I * integralError >= 0) && currentError < 0)){
-            integralError += currentError * dT;
-    }
-    diffError = (currentError - previousError)/dT;    
-    finaDutyCycle = K_P * currentError + K_I * integralError + K_E * diffError;
+    calculateDutyCycle(&regulator, aimTemperature, tempVal);
+    checkDutyCycleLimits(&(regulator.finalDutyCycle));
+    TIM3->CCR1 = regulator.finalDutyCycle; //Update duty cycle
+}
 
-    checkDutyCycleLimits(&finaDutyCycle);
-    TIM3->CCR1 = finaDutyCycle; //Update duty cycle
-    previousError = currentError;
+void SysTick_Handler(){
+    if(secondsCounter==60){ 
+        secondsCounter = 0;
+    }
+    ++secondsCounter;
 }
