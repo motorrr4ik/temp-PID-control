@@ -113,8 +113,8 @@ void transmitTemperatureValue(){
 
 //Check if calculated duty cycle value is in bounds, otherwise sets bound value
 void checkDutyCycleLimits(float* dutyCycle){
-    if(*dutyCycle < TIM3_ARR * 0.41){
-        *dutyCycle = TIM3_ARR * 0.41;
+    if(*dutyCycle < TIM3_ARR * 0.4){
+        *dutyCycle = TIM3_ARR * 0.4;
     }
     if(*dutyCycle > TIM3_ARR){
         *dutyCycle = TIM3_ARR;
@@ -127,11 +127,13 @@ void switchPeltier(){
         GPIOA->BSRR  &= ~GPIO_BSRR_BS1;     //Switch PA1 to low mode
         GPIOA->BSRR  |= GPIO_BSRR_BR1;
         aimTemperature = AIM_TEMP_LOWER;    //Set lower temp bound for cooling
+        regulator.integralError = 0;        //Reset integral error
         peltierHeatCoolFlag = 0;            //Set local flag to cooling mode
     }else{                                  //Heating mode
         GPIOA->BSRR  &= ~GPIO_BSRR_BR1;     //Switch PA1 to high mode
         GPIOA->BSRR  |= GPIO_BSRR_BS1; 
         aimTemperature = AIM_TEMP_UPPER;    //Set upper temp bound for cooling
+        regulator.integralError = 0;        //Reset integral error
         peltierHeatCoolFlag = 1;            //Set local flag to heating mode
     }
 }
@@ -140,8 +142,8 @@ void switchPeltier(){
 void freezeTemperatureValue(){
     if(regulator.currentError < TEMP_DELTA){
         secondsCounter = 0;
-        TIM3->CCR1 = ACHIEVED_TEMP_KEEPER;
         while (secondsCounter < 60){
+            TIM3->CCR1 = ACHIEVED_TEMP_KEEPER;
             calculateTemperature();
             transmitTemperatureValue();
         };
