@@ -1,8 +1,9 @@
 #include "PID.h"
 #include "utils.h"
 
+//PID calculation
 void calculateDutyCycle(pid* pid, int8_t aimTemperature, float tempVal){
-pid->currentError = abs(aimTemperature - tempVal);
+    pid->currentError = fabs(aimTemperature - tempVal);
     //Check if intergral error between min and max duty cycle value
     if(((K_I * pid->integralError <= TIM3_ARR) && pid->currentError >= 0) || 
         ((K_I * pid->integralError >= 0) && pid->currentError < 0)){
