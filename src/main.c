@@ -19,7 +19,6 @@ pid regulator = {1,1,1,1,1};
 volatile int8_t peltierHeatCoolFlag = 0;
 volatile int8_t aimTemperature = AIM_TEMP_UPPER;
 volatile uint32_t secondsCounter = 0;
-volatile float freezedDutyCycleValue = 0;
 
 void RCCInit(){
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;     //ADC1 activation
