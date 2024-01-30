@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+//pid regulator structure and functions description
 typedef struct{ 
     float currentError;
     float previousError;
