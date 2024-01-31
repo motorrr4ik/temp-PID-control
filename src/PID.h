@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-//pid regulator structure and functions description
+//pid regulator structure and functions declaration
 typedef struct{ 
+    int8_t coolOrHeatFlag;
     float currentError;
     float previousError;
     float integralError;
