@@ -14,8 +14,9 @@
 #define AIM_TEMP_LOWER 30
 #define TEMP_DELTA 0.15
 #define ACHIEVED_TEMP_KEEPER 385
-#define K_P 45.0
-#define K_I 20.0
+#define ERROR_BORDER 5
+#define K_P 35.0
+#define K_I 50.0
 #define K_E 0.01
 #define dT  0.01
 #endif
