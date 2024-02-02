@@ -1,5 +1,8 @@
 #ifndef UTILS
 #define UTILS
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 //Peripheral macros
 #define SYSTEM_CORE_CLOCK 16000000
 #define TIM3_PSC 160
@@ -19,4 +22,9 @@
 #define K_I 50.0
 #define K_E 0.01
 #define dT  0.01
+
+//structs and datatypes
+typedef struct{
+    int8_t value[3];
+}message;
 #endif

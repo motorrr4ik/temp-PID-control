@@ -1,8 +1,6 @@
+#include "utils.h"
 #ifndef PID
 #define PID
-#include <stdint.h>
-#include <stdlib.h>
-
 //pid regulator structure and functions declaration
 typedef struct{ 
     int8_t coolOrHeatFlag;

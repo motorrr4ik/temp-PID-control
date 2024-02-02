@@ -1,5 +1,4 @@
 #include "PID.h"
-#include "utils.h"
 
 //PID calculation
 void calculateDutyCycle(pid* pid, int8_t aimTemperature, float tempVal){
