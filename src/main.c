@@ -1,5 +1,6 @@
 #include "stm32f446xx.h"
 #include "utils.h"
+#include "tempData.h"
 #include "PID.h"
 
 //Temperature calculation variables
@@ -9,14 +10,13 @@ volatile float voltageVal  = 0;
 volatile float tempVal     = 0;
 
 //Transfer variables
-volatile uint8_t dmaMessage[3];
-
+volatile message dmaTransmit = {0};
+volatile message dmaRecieve  = {0};
+volatile int8_t temperaturePeaksNumber = 0;
 //PID calculation variables
 volatile pid regulator = {1,1,1,1,1,1};
 
 //Logical variables
-//Volatile int8_t peltierHeatCoolFlag = 0;
-volatile int8_t heatingModeFlag = 0;
 volatile int8_t aimTemperature = AIM_TEMP_UPPER;
 volatile uint32_t secondsCounter = 0;
 
@@ -56,11 +56,17 @@ void USART2Init(void){
 
 void DMA1Init(void){
     DMA1_Stream6->PAR = (uint32_t)&USART2->DR;
-    DMA1_Stream6->M0AR= (uint32_t)&dmaMessage;
-    DMA1_Stream6->NDTR= sizeof(dmaMessage);
+    DMA1_Stream6->M0AR= (uint32_t)&dmaTransmit;
+    DMA1_Stream6->NDTR= sizeof(dmaTransmit);
     DMA1_Stream6->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
     DMA1_Stream6->CR |= DMA_SxCR_MINC;
     DMA1_Stream6->CR |= DMA_SxCR_DIR_0;
+
+    DMA1_Stream5->PAR = (uint32_t)&USART2->DR;
+    DMA1_Stream5->M0AR= (uint32_t)&dmaRecieve;
+    DMA1_Stream5->NDTR= sizeof(dmaRecieve);
+    DMA1_Stream5->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
+    DMA1_Stream5->CR |= DMA_SxCR_MINC;
 }
 
 void TIM3Init(void){
@@ -107,7 +113,7 @@ void calculateTemperature(void){
     ADCVal = ADC1->DR;
     voltageVal = REF_VOLTAGE*ADCVal/MAX_ADC_VALUE;
     tempVal = powf(voltageVal,3)*tempCoeffs[0] + powf(voltageVal, 2)*tempCoeffs[1]+voltageVal*tempCoeffs[2]+tempCoeffs[3];
-    sprintf(dmaMessage, "%d\n", (int8_t)tempVal);
+    sprintf(dmaTransmit.value, "%d\n", (int8_t)tempVal);
 }
 
 void resetRegulatorValue(void){
@@ -169,6 +175,26 @@ void peltierControlManager(void){
     }
 }
 
+void fromCharToInt(int8_t *arr, int8_t *res){
+    int8_t size = strlen(arr);
+    int8_t j = size-1;
+    for(int8_t i = 0; i < size; ++i, --j){
+        arr[i] = arr[i]-'0';
+        *res += arr[i]*pow(10,j);
+    }
+}
+
+void receiveTemperaturePeaksNumber(void){
+    DMA1->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
+    DMA1_Stream5->CR |= DMA_SxCR_EN;
+    while(dmaRecieve.value[0] == 0){}
+    fromCharToInt(&dmaRecieve.value, &temperaturePeaksNumber);
+}
+
+void readTemperaturePeaksValues(void){
+
+}
+
 int main(){
     //Peripheral initialization
     RCCInit();
@@ -179,6 +205,7 @@ int main(){
     TIM4Init();
     ADC1Init();
     SysTick_Config(SYSTEM_CORE_CLOCK);
+    receiveTemperaturePeaksNumber();
     //Process start
     startProcess();
     for(;;){
