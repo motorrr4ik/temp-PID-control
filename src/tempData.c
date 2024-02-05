@@ -1,8 +1,8 @@
 #include "tempData.h"
 void calculateCoolOrHeatFlag(tempData* data, int8_t* previousTempValue){
-    if(*previousTempValue-(data->tempVal) < 0){
-        data->coolOrHeatFlag = 0;
-    }else{
+    if(*previousTempValue < (data->tempVal)){
         data->coolOrHeatFlag = 1;
+    }else{
+        data->coolOrHeatFlag = 0;
     }
 }
