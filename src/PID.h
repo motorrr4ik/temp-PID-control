@@ -11,5 +11,5 @@ typedef struct{
     float finalDutyCycle;
 }pid;
 
-void calculateDutyCycle(pid*, int8_t, float);
+extern void calculateDutyCycle(pid*, int8_t, float);
 #endif

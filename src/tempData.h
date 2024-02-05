@@ -7,5 +7,5 @@ typedef struct{
     int8_t tempVal;
 }tempData;
 
-void calculateCoolOrHeatFlag(tempData*, int8_t*);
+extern void calculateCoolOrHeatFlag(tempData*, int8_t*);
 #endif
