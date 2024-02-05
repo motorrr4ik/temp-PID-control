@@ -8,14 +8,14 @@ float tempCoeffs[4] = {9.418, -40.978, 95.315, -28.127}; //Coeffs for third-orde
 volatile uint32_t ADCVal   = 0;
 volatile float voltageVal  = 0;
 volatile float tempVal     = 0;
+volatile tempData* data;
 
 //Transfer variables
-volatile message dmaTransmit = {0};
-volatile message dmaRecieve  = {0};
-volatile int8_t temperaturePeaksNumber = 0;
+volatile message dmaTransmit = {0,0,0};
+volatile message dmaRecieve  = {0,0,0};
+volatile int16_t temperaturePeaksNumber = 0;
 //PID calculation variables
 volatile pid regulator = {1,1,1,1,1,1};
-
 //Logical variables
 volatile int8_t aimTemperature = AIM_TEMP_UPPER;
 volatile uint32_t secondsCounter = 0;
@@ -67,6 +67,14 @@ void DMA1Init(void){
     DMA1_Stream5->NDTR= sizeof(dmaRecieve);
     DMA1_Stream5->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
     DMA1_Stream5->CR |= DMA_SxCR_MINC;
+
+}
+
+void updateDMA1S5NDTRValue(void){
+    DMA1_Stream5->CR &= ~DMA_SxCR_EN;
+    DMA1->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
+    DMA1_Stream5->NDTR = sizeof(dmaRecieve);
+    DMA1_Stream5->CR |= DMA_SxCR_EN;
 }
 
 void TIM3Init(void){
@@ -97,7 +105,7 @@ void ADC1Init(void){
 
 //Init heating for peltier element
 void startProcess(void){
-    if(regulator.coolOrHeatFlag){
+    if(data->coolOrHeatFlag){
         GPIOA->BSRR  &= ~GPIO_BSRR_BR1;     //Switch PA1 to high mode
         GPIOA->BSRR  |= GPIO_BSRR_BS1; 
         aimTemperature = AIM_TEMP_UPPER;    //Set upper temp bound for cooling
@@ -117,7 +125,13 @@ void calculateTemperature(void){
 }
 
 void resetRegulatorValue(void){
-    regulator.currentError    = 1;
+    regulator.currentError = 1;
+}
+void resetDMAReceivedMessage(void){
+    int8_t length = strlen(dmaRecieve.value);
+    for(int8_t i = 0; i < length; ++i){
+        dmaRecieve.value[i] = 0;
+    }
 }
 
 //Transmitting temperuter value via USART2. Temporary solution
@@ -138,18 +152,18 @@ void checkDutyCycleLimits(float* dutyCycle){
 
 //Function wich toggles PA1 pin to switch Peltier mode to heat/cool. 0 - cooling, 1 - heating status flags
 void switchPeltier(void){
-    if(regulator.coolOrHeatFlag){           //Cooling mode
+    if(data->coolOrHeatFlag){           //Cooling mode
         GPIOA->BSRR  &= ~GPIO_BSRR_BS1;     //Switch PA1 to low mode
         GPIOA->BSRR  |= GPIO_BSRR_BR1;
         aimTemperature = AIM_TEMP_LOWER;    //Set lower temp bound for cooling
         // regulator.integralError = 0;        //Reset integral error
-        regulator.coolOrHeatFlag = 0;       //Set local flag to cooling mode
+        // regulator.coolOrHeatFlag = 0;       //Set local flag to cooling mode
     }else{                                  //Heating mode
         GPIOA->BSRR  &= ~GPIO_BSRR_BR1;     //Switch PA1 to high mode
         GPIOA->BSRR  |= GPIO_BSRR_BS1; 
         aimTemperature = AIM_TEMP_UPPER;    //Set upper temp bound for cooling
         // regulator.integralError = 0;        //Reset integral error
-        regulator.coolOrHeatFlag = 1;       //Set local flag to heating mode
+        // regulator.coolOrHeatFlag = 1;       //Set local flag to heating mode
     }
 }
 
@@ -163,6 +177,7 @@ void countPeriod(void){
         };
         resetRegulatorValue();
         switchPeltier();
+        data++;
     }
 }
 
@@ -175,24 +190,43 @@ void peltierControlManager(void){
     }
 }
 
-void fromCharToInt(int8_t *arr, int8_t *res){
+//Coverts received message from char to int
+void fromCharToInt(int8_t *arr, int16_t *res){
     int8_t size = strlen(arr);
     int8_t j = size-1;
-    for(int8_t i = 0; i < size; ++i, --j){
-        arr[i] = arr[i]-'0';
-        *res += arr[i]*pow(10,j);
+    for(int8_t i = 0; i < size; ++i, --j, arr++){
+        *arr = *arr-'0';
+        *res += (*arr)*pow(10,j);
     }
 }
 
+//get number of temperature peaks and allocate memory for temperature points array
 void receiveTemperaturePeaksNumber(void){
-    DMA1->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
-    DMA1_Stream5->CR |= DMA_SxCR_EN;
-    while(dmaRecieve.value[0] == 0){}
+    updateDMA1S5NDTRValue();
+    while(dmaRecieve.value[0] == 0){}   //wait until message is received
     fromCharToInt(&dmaRecieve.value, &temperaturePeaksNumber);
+    data = (tempData*)malloc(temperaturePeaksNumber*sizeof(tempData));
+    resetDMAReceivedMessage();
 }
 
+//reads temperature peaks by their amount 
 void readTemperaturePeaksValues(void){
-
+    calculateTemperature();
+    int16_t receivedTemp = 0;
+    int8_t prevTemp = tempVal;
+    tempData *dummy = data;
+    for(int8_t i = 0; i < temperaturePeaksNumber; ++i){
+        updateDMA1S5NDTRValue();
+        while(dmaRecieve.value[0] == 0){}
+        fromCharToInt(&dmaRecieve.value, &receivedTemp);
+        data->tempVal = receivedTemp;
+        calculateCoolOrHeatFlag(data, &prevTemp);
+        prevTemp = receivedTemp;
+        receivedTemp = 0;
+        resetDMAReceivedMessage();
+        data++;
+    }
+    data = dummy;
 }
 
 int main(){
@@ -206,6 +240,7 @@ int main(){
     ADC1Init();
     SysTick_Config(SYSTEM_CORE_CLOCK);
     receiveTemperaturePeaksNumber();
+    readTemperaturePeaksValues();
     //Process start
     startProcess();
     for(;;){
