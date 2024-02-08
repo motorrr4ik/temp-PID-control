@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "packages.h"
 #ifndef PID
 #define PID
 //pid regulator structure and functions declaration
@@ -13,5 +14,5 @@ typedef struct{
     float dutyCycle;
 }pid;
 
-void calculateDutyCycle(pid*, int8_t, float);
+void calculateDutyCycle(pid*, workingPackage*);
 #endif;

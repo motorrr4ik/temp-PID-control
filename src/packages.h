@@ -17,6 +17,11 @@ typedef struct{
 
 typedef struct{
     int8_t coolOrHeatFlag;
+    int8_t currentCycle; 
+    int8_t currentAimTemperature;
+    int8_t pidBorder;
+    int8_t currentPeriod;
     float currentTemperature;
+    float temperatureEquationCoeffs[4];
 }workingPackage;
 #endif

@@ -30,15 +30,17 @@ void USART2Init(void){
     USART2->CR1 |= USART_CR1_UE;            //USART enable
     USART2->CR1 |= USART_CR1_RE;            //USART recieve enable
     USART2->CR1 |= USART_CR1_TE;            //USART transmit enable
+    USART2->CR1 |= USART_CR1_IDLEIE;
     USART2->CR3 |= USART_CR3_DMAR;          //USART DMA reading enable
     USART2->CR3 |= USART_CR3_DMAT;          //USART DMA transmitting enable
     USART2->BRR = SYSTEM_CORE_CLOCK/9600;   //Set USART speed   
+    NVIC_EnableIRQ(USART2_IRQn);
 }
 
-void DMA1Init(uint32_t *varAdressIn, uint32_t *varAdressOut){
+void DMA1Init(uint32_t *varAdressIn, uint32_t sizeIn, uint32_t *varAdressOut, uint32_t sizeOut){
     DMA1_Stream6->PAR = (uint32_t)&USART2->DR;
     DMA1_Stream6->M0AR= varAdressOut;
-    DMA1_Stream6->NDTR= sizeof(*varAdressOut);
+    DMA1_Stream6->NDTR= sizeOut;
     DMA1_Stream6->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
     DMA1_Stream6->CR |= DMA_SxCR_MINC;
     DMA1_Stream6->CR |= DMA_SxCR_DIR_0;
@@ -47,11 +49,13 @@ void DMA1Init(uint32_t *varAdressIn, uint32_t *varAdressOut){
 
     DMA1_Stream5->PAR = (uint32_t)&USART2->DR;
     DMA1_Stream5->M0AR= varAdressIn;
-    DMA1_Stream5->NDTR= sizeof(*varAdressIn);
+    DMA1_Stream5->NDTR= sizeIn;
     DMA1_Stream5->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
     DMA1_Stream5->CR |= DMA_SxCR_MINC;
     DMA1_Stream5->CR |= DMA_SxCR_CIRC;
+    DMA1_Stream5->CR |= DMA_SxCR_TCIE;
     DMA1_Stream5->CR |= DMA_SxCR_EN;
+    // NVIC_EnableIRQ(DMA1_Stream5_IRQn);
 }
 
 void TIM3Init(void){
