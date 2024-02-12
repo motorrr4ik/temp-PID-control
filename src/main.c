@@ -5,7 +5,6 @@
 #include "PID.h"
 #include "packages.h"
 
-// volatile int8_t aimTemperature = 0;
 volatile uint32_t secondsCounter = 0;
 volatile inputPackage inPack = {0};
 volatile outputPackage outPack = {0};
@@ -50,16 +49,16 @@ void updateCycleParameters(void){
 
 //Function wich toggles PA1 pin to switch Peltier mode to heat/cool. 0 - cooling, 1 - heating status flags
 void switchPeltier(void){
-    if(workPack.coolOrHeatFlag){           //Cooling mode
-        GPIOA->BSRR  &= ~GPIO_BSRR_BS1;     //Switch PA1 to low mode
+    if(workPack.coolOrHeatFlag){          //Cooling mode
+        GPIOA->BSRR  &= ~GPIO_BSRR_BS1;   //Switch PA1 to low mode
         GPIOA->BSRR  |= GPIO_BSRR_BR1;
-        // regulator.integralError = 0;        //Reset integral error
+        regulator.integralError = 0;      //Reset integral error
         // regulator.coolOrHeatFlag = 0;       //Set local flag to cooling mode
-    }else{                                  //Heating mode
-        GPIOA->BSRR  &= ~GPIO_BSRR_BR1;     //Switch PA1 to high mode
+    }else{                                //Heating mode
+        GPIOA->BSRR  &= ~GPIO_BSRR_BR1;   //Switch PA1 to high mode
         GPIOA->BSRR  |= GPIO_BSRR_BS1; 
-        // regulator.integralError = 0;        //Reset integral error
-        // regulator.coolOrHeatFlag = 1;       //Set local flag to heating mode
+        regulator.integralError = 0;      //Reset integral error
+        // regulator.coolOrHeatFlag = 1;  //Set local flag to heating mode
     }
 }
 
@@ -67,7 +66,7 @@ void switchPeltier(void){
 void countPeriod(void){
     if(regulator.currentError < TEMP_DELTA){
         secondsCounter = 0;
-        while (secondsCounter < workPack.currentCycle){
+        while (secondsCounter < workPack.currentPeriod){
             calculateTemperature(workPack.temperatureEquationCoeffs, sizeof(workPack.temperatureEquationCoeffs)/sizeof(workPack.temperatureEquationCoeffs[0]));
         };
         updateCycleParameters();
@@ -108,6 +107,7 @@ void TIM4_IRQHandler(void){
 void USART2_IRQHandler(void){
     if(USART2->SR & USART_SR_IDLE){
         (void)USART2->DR;
+        // workPack.currentCycle = 0;
         workPack.currentAimTemperature = inPack.temps[workPack.currentCycle];
         workPack.pidBorder = inPack.pidBorder;
         workPack.currentPeriod = inPack.times[workPack.currentCycle];
