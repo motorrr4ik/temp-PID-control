@@ -4,11 +4,6 @@
 #define REF_VOLTAGE 3.3
 #define MAX_ADC_VALUE 4096
 #define TEMP_DELTA 0.15
-#define ACHIEVED_TEMP_KEEPER 385
-#define ERROR_BORDER 5
-#define K_P 35.0
-#define K_I 50.0
-#define K_E 0.01
 #define dT  0.01
 //
 #define SYSTEM_CORE_CLOCK 16000000
