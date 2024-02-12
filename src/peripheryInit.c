@@ -53,9 +53,7 @@ void DMA1Init(uint32_t *varAdressIn, uint32_t sizeIn, uint32_t *varAdressOut, ui
     DMA1_Stream5->CR = 0x4 << DMA_SxCR_CHSEL_Pos;
     DMA1_Stream5->CR |= DMA_SxCR_MINC;
     DMA1_Stream5->CR |= DMA_SxCR_CIRC;
-    DMA1_Stream5->CR |= DMA_SxCR_TCIE;
     DMA1_Stream5->CR |= DMA_SxCR_EN;
-    // NVIC_EnableIRQ(DMA1_Stream5_IRQn);
 }
 
 void TIM3Init(void){
