@@ -5,6 +5,8 @@
 #include "PID.h"
 #include "packages.h"
 
+//01 03 05 37 21 2A 19 19 19 23 32 00
+
 volatile uint32_t secondsCounter = 0;
 volatile inputPackage inPack = {0};
 volatile outputPackage outPack = {0};
@@ -49,16 +51,14 @@ void updateCycleParameters(void){
 
 //Function wich toggles PA1 pin to switch Peltier mode to heat/cool. 0 - cooling, 1 - heating status flags
 void switchPeltier(void){
-    if(workPack.coolOrHeatFlag){          //Cooling mode
+    if(!workPack.coolOrHeatFlag){          //Cooling mode
         GPIOA->BSRR  &= ~GPIO_BSRR_BS1;   //Switch PA1 to low mode
         GPIOA->BSRR  |= GPIO_BSRR_BR1;
         regulator.integralError = 0;      //Reset integral error
-        // regulator.coolOrHeatFlag = 0;       //Set local flag to cooling mode
     }else{                                //Heating mode
         GPIOA->BSRR  &= ~GPIO_BSRR_BR1;   //Switch PA1 to high mode
         GPIOA->BSRR  |= GPIO_BSRR_BS1; 
         regulator.integralError = 0;      //Reset integral error
-        // regulator.coolOrHeatFlag = 1;  //Set local flag to heating mode
     }
 }
 
@@ -107,7 +107,7 @@ void TIM4_IRQHandler(void){
 void USART2_IRQHandler(void){
     if(USART2->SR & USART_SR_IDLE){
         (void)USART2->DR;
-        // workPack.currentCycle = 0;
+        workPack.currentCycle = 0;
         workPack.currentAimTemperature = inPack.temps[workPack.currentCycle];
         workPack.pidBorder = inPack.pidBorder;
         workPack.currentPeriod = inPack.times[workPack.currentCycle];
@@ -115,6 +115,8 @@ void USART2_IRQHandler(void){
         regulator.ki = inPack.coeffs[1];
         regulator.kd = inPack.coeffs[2];
     }
+    calculateDutyCycle(&regulator, &workPack);
+    switchPeltier();
 }
 void SysTick_Handler(void){
     if(secondsCounter==60){ 
