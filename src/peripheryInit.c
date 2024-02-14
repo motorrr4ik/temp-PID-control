@@ -15,7 +15,7 @@ void GPIOAInit(void){
     GPIOA->MODER |= GPIO_MODER_MODE6_1; //Set PA6 to alternate function mode
     GPIOA->MODER |= GPIO_MODER_MODE1_0; //Set PA1 to general purpose output mode
     GPIOA->AFR[0]|= GPIO_AFRL_AFRL6_1;  //Enable alternate function register for PA6 pin, TIM3 CH1 PWM mode
-    GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
+    // GPIOA->BSRR  |= GPIO_BSRR_BS1;      //Set PA1 output to high
     GPIOA->MODER |= GPIO_MODER_MODE2_1; //Set PA2 to alternate function mode
     GPIOA->MODER |= GPIO_MODER_MODE3_1; //Set PA3 to alternate function mode
     GPIOA->AFR[0]|= GPIO_AFRL_AFRL2_0 
