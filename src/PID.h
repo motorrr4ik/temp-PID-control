@@ -15,4 +15,5 @@ typedef struct{
 }pid;
 
 void calculateDutyCycle(pid*, workingPackage*);
-#endif;
+void setWorkMode(pid*, workingPackage*);
+#endif
