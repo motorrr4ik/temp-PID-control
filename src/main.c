@@ -38,10 +38,16 @@ void checkDutyCycleLimits(float* dutyCycle){
     }
 }
 
+void disablePeltier(void){
+    GPIOA->BSRR  &= ~GPIO_BSRR_BS1;   //Switch PA1 to low mode
+    GPIOA->BSRR  &= ~GPIO_BSRR_BR1;   //Switch PA1 to high mode
+}
+
 void updateCycleParameters(void){
     workPack.currentCycle++;
     if(workPack.currentCycle >= inPack.cycles){
         inPack.enable = 0;
+        disablePeltier();
     }else{
         workPack.currentAimTemperature = inPack.temps[workPack.currentCycle];
         workPack.currentPeriod = inPack.times[workPack.currentCycle];
@@ -70,6 +76,7 @@ void countPeriod(void){
             calculateTemperature(workPack.temperatureEquationCoeffs, sizeof(workPack.temperatureEquationCoeffs)/sizeof(workPack.temperatureEquationCoeffs[0]));
         };
         updateCycleParameters();
+        setWorkMode(&regulator, &workPack);
         switchPeltier();
     }
 }
@@ -115,7 +122,7 @@ void USART2_IRQHandler(void){
         regulator.ki = inPack.coeffs[1];
         regulator.kd = inPack.coeffs[2];
     }
-    calculateDutyCycle(&regulator, &workPack);
+    setWorkMode(&regulator, &workPack);
     switchPeltier();
 }
 void SysTick_Handler(void){
