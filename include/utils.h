@@ -5,7 +5,7 @@
 #define MAX_ADC_VALUE 4096
 #define TEMP_DELTA 0.15
 #define dT  0.01
-//
+//Periphery macros
 #define SYSTEM_CORE_CLOCK 16000000
 #define TIM3_PSC 160
 #define TIM3_ARR 1000
