@@ -37,7 +37,7 @@ void USART2Init(void){
     NVIC_EnableIRQ(USART2_IRQn);
 }
 
-void DMA1Init(uint32_t *varAdressIn, uint32_t sizeIn, uint32_t *varAdressOut, uint32_t sizeOut){
+void DMA1Init(uint32_t varAdressIn, uint32_t sizeIn, uint32_t varAdressOut, uint32_t sizeOut){
     DMA1_Stream6->PAR = (uint32_t)&USART2->DR;
     DMA1_Stream6->M0AR= varAdressOut;
     DMA1_Stream6->NDTR= sizeOut;
