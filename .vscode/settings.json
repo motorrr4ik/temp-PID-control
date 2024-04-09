@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "stm32f446xx.h": "c",
+        "utils.h": "c",
+        "peripheryinit.h": "c"
+    },
+    "cortex-debug.variableUseNaturalFormat": true
+}
