@@ -4,8 +4,32 @@
 #include "tempData.h"
 #include "PID.h"
 #include "packages.h"
-
 //01 03 05 37 21 2A 19 19 19 23 32 00
+
+// TIM3/4 acces for switchin duty cycle
+uint32_t* PWM_CHS[HEATING_CELL_NUMBER] =
+{
+    (uint32_t*)&(TIM3->CCR1),
+    (uint32_t*)&(TIM3->CCR2),
+    (uint32_t*)&(TIM3->CCR3),
+    (uint32_t*)&(TIM3->CCR4),
+    (uint32_t*)&(TIM1->CCR1),
+    (uint32_t*)&(TIM1->CCR2),
+    (uint32_t*)&(TIM1->CCR3),
+    (uint32_t*)&(TIM1->CCR4),
+};
+
+uint32_t* PWM_SWS[HEATING_CELL_NUMBER] =
+{
+    (uint32_t*)&(TIM3->CCR1),
+    (uint32_t*)&(TIM3->CCR2),
+    (uint32_t*)&(TIM3->CCR3),
+    (uint32_t*)&(TIM3->CCR4),
+    (uint32_t*)&(TIM1->CCR1),
+    (uint32_t*)&(TIM1->CCR2),
+    (uint32_t*)&(TIM1->CCR3),
+    (uint32_t*)&(TIM1->CCR4),
+};
 
 volatile uint32_t secondsCounter = 0;
 volatile inputPackage inPack = {0};
