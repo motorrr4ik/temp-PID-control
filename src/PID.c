@@ -4,6 +4,7 @@
 //PID calculation
 void calculateDutyCycle(pid* pid, workingPackage *workPack){
     heatingCell currentCell;
+    //iterate through every cell and calculate params
     for(int8_t i = 0; i < HEATING_CELL_NUMBER; ++i){
         currentCell = workPack->cells[i];
         pid->currentError = currentCell.aimTemp - currentCell.currentTemp;
@@ -21,7 +22,7 @@ void calculateDutyCycle(pid* pid, workingPackage *workPack){
     //     pid->currentError = fabs(pid->currentError);
     // }
         if(pid->currentError > workPack->pidBorder){
-            pid->dutyCycle = TIM3_ARR;
+            currentCell.dutyCycle = TIM3_ARR;
         }else{
             //Check if intergral error between min and max duty cycle value
             if(((pid->ki * pid->integralError <= TIM3_ARR) && pid->currentError >= 0) || 
