@@ -12,4 +12,5 @@
 #define TIM3_ARR          1000
 #define TIM1_PSC          160
 #define TIM1_ARR          1000
+#define BAUDRATE          9600
 #endif
