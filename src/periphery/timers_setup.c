@@ -32,15 +32,22 @@ void TIM3SetUp(void)
     TIM3->CCMR1 |= TIM_CCMR1_OC1M_1 // Enable PWM generation on TIM3 Channel1
                    | TIM_CCMR1_OC1M_2;
 
-    TIM3->CCMR2 |= TIM_CCMR2_OC3M_1 // Enable PWM generation on TIM3 Channel1
+    TIM3->CCMR1 |= TIM_CCMR1_OC2M_1 // Enable PWM generation on TIM3 Channel2
+                   | TIM_CCMR1_OC2M_2;
+
+    TIM3->CCMR2 |= TIM_CCMR2_OC3M_1 // Enable PWM generation on TIM3 Channel3
                    | TIM_CCMR2_OC3M_2;
+
+    TIM3->CCMR2 |= TIM_CCMR2_OC4M_1 // Enable PWM generation on TIM3 Channel4
+                   | TIM_CCMR2_OC4M_2;
 
     TIM3->CCER |= TIM_CCER_CC1E; // Enable capture/compare register
     TIM3->CCER |= TIM_CCER_CC2E; // Enable capture/compare register
     TIM3->CCER |= TIM_CCER_CC3E; // Enable capture/compare register
     TIM3->CCER |= TIM_CCER_CC4E; // Enable capture/compare register
-    TIM3->CCR1 = 0;
-    TIM3->CCR2 = 0;
-    TIM3->CCR3 = 0;
-    TIM3->CCR4 = 0;
+
+    TIM3->CCR1 = TIM3_ARR / 2;
+    TIM3->CCR2 = TIM3_ARR / 2;
+    TIM3->CCR3 = TIM3_ARR / 2;
+    TIM3->CCR4 = TIM3_ARR / 2;
 }
