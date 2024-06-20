@@ -13,7 +13,7 @@ void TIM1SetUp(void);
 void TIM3SetUp(void);
 //----USART setup-----
 void USART2SetUp(void);
-void USART2_IRQn(void);
+void USART2_IRQHandler(void);
 //----DMA setup-------
 void DMA1SetUp(void);
 void DMA2SetUp(void);
