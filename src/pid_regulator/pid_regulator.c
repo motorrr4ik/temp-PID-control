@@ -24,5 +24,16 @@ uint16_t calculateDutyCycle(pid_regulator_t *pid_regulator)
 
         pid_regulator->previous_error = pid_regulator->current_error;
     }
+
+    if (pid_regulator->duty_cycle < 0)
+    {
+        pid_regulator->duty_cycle = 0;
+    }
+
+    if (pid_regulator->duty_cycle > MAX_DUTY_CYCLE_VALUE)
+    {
+        pid_regulator->duty_cycle = MAX_DUTY_CYCLE_VALUE;
+    }
+
     return pid_regulator->duty_cycle;
 }
