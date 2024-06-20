@@ -11,7 +11,7 @@ void TIM1SetUp(void)
     TIM1->CCMR1 |= TIM_CCMR1_OC1M_1 // Enable PWM generation on TIM1 Channel1
                    | TIM_CCMR1_OC1M_2;
 
-    TIM3->CCMR1 |= TIM_CCMR1_OC2M_1 // Enable PWM generation on TIM3 Channel2
+    TIM1->CCMR1 |= TIM_CCMR1_OC2M_1 // Enable PWM generation on TIM1 Channel2
                    | TIM_CCMR1_OC2M_2;
 
     TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 // Enable PWM generation on TIM1 Channel1
