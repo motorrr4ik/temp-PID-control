@@ -4,8 +4,8 @@
 void TIM1SetUp(void)
 {
     TIM1->CR1 |= TIM_CR1_CEN;
-    TIM1->PSC = TIM3_PSC - 1;       // Set TIM3 prescalser: check out utils.h file for values
-    TIM1->ARR = TIM3_ARR - 1;       // Set TIM3 arr: check out utils.h file for values
+    TIM1->PSC = TIM1_PSC - 1;       // Set TIM3 prescalser: check out utils.h file for values
+    TIM1->ARR = TIM1_ARR - 1;       // Set TIM3 arr: check out utils.h file for values
     TIM1->CNT = 0;                  // Set TIM3 counter
     TIM1->CCMR1 |= TIM_CCMR1_OC1M_1 // Enable PWM generation on TIM3 Channel1
                    | TIM_CCMR1_OC1M_2;

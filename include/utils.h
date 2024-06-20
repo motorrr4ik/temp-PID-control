@@ -10,6 +10,6 @@
 #define SYSTEM_CORE_CLOCK 16000000
 #define TIM3_PSC          160
 #define TIM3_ARR          1000
-#define TIM4_PSC          160
-#define TIM4_ARR          1000
+#define TIM1_PSC          160
+#define TIM1_ARR          1000
 #endif
