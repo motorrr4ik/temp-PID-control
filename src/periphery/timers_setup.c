@@ -24,10 +24,17 @@ void TIM1SetUp(void)
     TIM1->CCER |= TIM_CCER_CC2E; // Enable capture/compare register
     TIM1->CCER |= TIM_CCER_CC3E; // Enable capture/compare register
     TIM1->CCER |= TIM_CCER_CC4E; // Enable capture/compare register
+
     TIM1->CCR1 = 0;
     TIM1->CCR2 = 0;
     TIM1->CCR3 = 0;
     TIM1->CCR4 = 0;
+#ifdef DEBUG
+    TIM1->CCR1 = TIM3_ARR / 2;
+    TIM1->CCR2 = TIM3_ARR / 2;
+    TIM1->CCR3 = TIM3_ARR / 2;
+    TIM1->CCR4 = TIM3_ARR / 2;
+#endif
 }
 
 void TIM3SetUp(void)
@@ -54,8 +61,15 @@ void TIM3SetUp(void)
     TIM3->CCER |= TIM_CCER_CC3E; // Enable capture/compare register
     TIM3->CCER |= TIM_CCER_CC4E; // Enable capture/compare register
 
+    TIM3->CCR1 = 0;
+    TIM3->CCR2 = 0;
+    TIM3->CCR3 = 0;
+    TIM3->CCR4 = 0;
+
+#ifdef DEBUG
     TIM3->CCR1 = TIM3_ARR / 2;
     TIM3->CCR2 = TIM3_ARR / 2;
     TIM3->CCR3 = TIM3_ARR / 2;
     TIM3->CCR4 = TIM3_ARR / 2;
+#endif
 }
