@@ -21,7 +21,8 @@ typedef struct
 typedef struct
 {
     uint32_t power;
-    uint32_t switch_pin;
+    uint32_t cool_mode;
+    uint32_t heat_mode;
 } peltier_state_t;
 
 typedef struct
