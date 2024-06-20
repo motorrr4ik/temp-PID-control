@@ -4,14 +4,21 @@
 void TIM1SetUp(void)
 {
     TIM1->CR1 |= TIM_CR1_CEN;
-    TIM1->PSC = TIM1_PSC - 1;       // Set TIM3 prescalser: check out utils.h file for values
-    TIM1->ARR = TIM1_ARR - 1;       // Set TIM3 arr: check out utils.h file for values
-    TIM1->CNT = 0;                  // Set TIM3 counter
-    TIM1->CCMR1 |= TIM_CCMR1_OC1M_1 // Enable PWM generation on TIM3 Channel1
+    TIM1->PSC = TIM1_PSC - 1; // Set TIM3 prescalser: check out utils.h file for values
+    TIM1->ARR = TIM1_ARR - 1; // Set TIM3 arr: check out utils.h file for values
+    TIM1->CNT = 0;            // Set TIM3 counter
+
+    TIM1->CCMR1 |= TIM_CCMR1_OC1M_1 // Enable PWM generation on TIM1 Channel1
                    | TIM_CCMR1_OC1M_2;
 
-    TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 // Enable PWM generation on TIM3 Channel1
+    TIM3->CCMR1 |= TIM_CCMR1_OC2M_1 // Enable PWM generation on TIM3 Channel2
+                   | TIM_CCMR1_OC2M_2;
+
+    TIM1->CCMR2 |= TIM_CCMR2_OC3M_1 // Enable PWM generation on TIM1 Channel1
                    | TIM_CCMR2_OC3M_2;
+
+    TIM1->CCMR2 |= TIM_CCMR2_OC4M_1 // Enable PWM generation on TIM1 Channel4
+                   | TIM_CCMR2_OC4M_2;
 
     TIM1->CCER |= TIM_CCER_CC1E; // Enable capture/compare register
     TIM1->CCER |= TIM_CCER_CC2E; // Enable capture/compare register
@@ -25,10 +32,11 @@ void TIM1SetUp(void)
 
 void TIM3SetUp(void)
 {
-    TIM3->CR1 |= TIM_CR1_CEN;       // Enable TIM3
-    TIM3->PSC = TIM3_PSC - 1;       // Set TIM3 prescalser: check out utils.h file for values
-    TIM3->ARR = TIM3_ARR - 1;       // Set TIM3 arr: check out utils.h file for values
-    TIM3->CNT = 0;                  // Set TIM3 counter
+    TIM3->CR1 |= TIM_CR1_CEN; // Enable TIM3
+    TIM3->PSC = TIM3_PSC - 1; // Set TIM3 prescalser: check out utils.h file for values
+    TIM3->ARR = TIM3_ARR - 1; // Set TIM3 arr: check out utils.h file for values
+    TIM3->CNT = 0;            // Set TIM3 counter
+
     TIM3->CCMR1 |= TIM_CCMR1_OC1M_1 // Enable PWM generation on TIM3 Channel1
                    | TIM_CCMR1_OC1M_2;
 
