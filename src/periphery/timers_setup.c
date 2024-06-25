@@ -73,3 +73,13 @@ void TIM3SetUp(void)
     TIM3->CCR4 = TIM3_ARR / 2;
 #endif
 }
+
+void TIM4SetUp(void)
+{
+    TIM4->CR1 |= TIM_CR1_CEN;  // Enable TIM4
+    TIM4->PSC |= TIM4_PSC - 1; // Set TIM4 prescaler
+    TIM4->ARR |= TIM4_ARR - 1; // Set TIM4 arr: check out utils.h file for values
+    TIM4->CNT  = 0;            // Set TIM4 counter
+    TIM4->DIER = TIM_DIER_UIE; // Enable interrupt
+    NVIC_EnableIRQ(TIM4_IRQn);
+}
