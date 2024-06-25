@@ -1,6 +1,6 @@
 #include "periphery.h"
 
-void InitPeriphery(stand_workflow_t *stand)
+void initPeriphery(stand_workflow_t *stand)
 {
     RCCSetUp();
     GPIOASetup();
@@ -15,10 +15,10 @@ void InitPeriphery(stand_workflow_t *stand)
     SPI1SetUp();
 }
 
-void EnablePeriphery()
+void enablePeriphery()
 {
 }
 
-void DisablePeriphery()
+void disablePeriphery()
 {
 }

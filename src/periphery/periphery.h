@@ -5,9 +5,9 @@
 #include "stm32f4xx.h"
 
 //-Common Periph func-
-void InitPeriphery(stand_workflow_t *stand);
-void EnablePeriphery(void);
-void DisablePeriphery(void);
+void initPeriphery(stand_workflow_t *stand);
+void enablePeriphery(void);
+void disablePeriphery(void);
 void RCCSetUp(void);
 //-----GPIO setup-----
 void GPIOASetup(void);
