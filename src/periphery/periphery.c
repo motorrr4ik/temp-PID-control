@@ -9,8 +9,8 @@ void InitPeriphery(stand_workflow_t *stand)
     TIM1SetUp();
     TIM3SetUp();
     USART2SetUp();
-    DMA1SetUp(&(stand->input_data), &(stand->output_data));
-    DMA2SetUp(&(stand->adc), &(stand->spi_adc));
+    DMA1SetUp((uint32_t) & (stand->input_data), (uint32_t) & (stand->output_data));
+    DMA2SetUp((uint32_t) & (stand->adc), (uint32_t) & (stand->spi_adc));
     ADC1SetUp();
     SPI1SetUp();
 }
