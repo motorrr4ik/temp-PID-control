@@ -41,7 +41,7 @@ typedef struct
     cell_status_e status;
 } heating_cell_t;
 
-void switchPeltierMode(heating_cell_t *heating_cell);
+static void _switchPeltierMode(heating_cell_t *heating_cell);
 void calculatePeltierPower(heating_cell_t *heating_cell);
 
 #endif // HEATING_CELL
