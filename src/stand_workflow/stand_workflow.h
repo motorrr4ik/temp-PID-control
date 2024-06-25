@@ -44,8 +44,9 @@ typedef struct
     heating_cell_t cells[HEATING_CELL_NUMBER];
 } stand_workflow_t;
 
-void MainTask(stand_workflow_t *stand);
-static void _InitCells(stand_workflow_t *stand);
-static void _CalculateTemperature(stand_workflow_t *stand);
-static void _HandlePeriod(stand_workflow_t *stand);
+void mainTask(stand_workflow_t *stand);
+static void _initCells(stand_workflow_t *stand);
+static void _calculateTemperature(stand_workflow_t *stand);
+static void _calculateTemperatureEquation(stand_workflow_t *stand);
+static void _handlePeriod(stand_workflow_t *stand);
 #endif
