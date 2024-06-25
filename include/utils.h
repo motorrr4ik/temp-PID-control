@@ -6,6 +6,9 @@
 #define PID_SW_TEMP_DELTA    0.15
 #define dT                   0.01
 #define CYCLES_NUMBER        3
+#define HEATING_CELL_NUMBER  8
+#define DATA_BUFF_SIZE       200
+#define TEMP_CALC_COEFFS     4
 // Periphery macros
 #define SYSTEM_CORE_CLOCK    16000000
 #define TIM3_PSC             160
