@@ -2,14 +2,14 @@
 #define HEATING_CELL
 
 #include "pid_regulator.h"
+#include "utils.h"
 #include <stdint.h>
-#define HEATING_CELL_NUMBER 8
 
 typedef enum
 {
     cooling = 0,
     heating = 1
-} cell_status;
+} cell_status_e;
 
 typedef struct
 {
@@ -38,7 +38,7 @@ typedef struct
     light_state_t light;
     temperature_state_t temperature;
     pid_regulator_t pid_regulator;
-    cell_status status;
+    cell_status_e status;
 } heating_cell_t;
 
 void switchPeltierMode(heating_cell_t *heating_cell);
