@@ -8,7 +8,8 @@
 typedef enum
 {
     cooling = 0,
-    heating = 1
+    heating = 1,
+    standby = 2
 } cell_status_e;
 
 typedef struct
@@ -21,6 +22,8 @@ typedef struct
 typedef struct
 {
     uint32_t power;
+    uint32_t *timer_channel;
+    uint32_t *gpio_sw;
     uint32_t cool_mode;
     uint32_t heat_mode;
 } peltier_state_t;
