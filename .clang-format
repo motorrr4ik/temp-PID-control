@@ -1,0 +1,52 @@
+Language: Cpp
+BasedOnStyle: Microsoft
+# AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: AcrossEmptyLinesAndComments
+AlignConsecutiveMacros:      AcrossEmptyLinesAndComments
+# AlignConsecutiveDeclarations: AcrossEmptyLines
+# AlignEscapedNewlines: Left
+# AlignOperands: true
+AlignTrailingComments: true
+# AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+# AllowShortIfStatementsOnASingleLine: false
+# AllowShortLoopsOnASingleLine: false
+# AlwaysBreakAfterDefinitionReturnType: None
+# AlwaysBreakAfterReturnType: None
+# AlwaysBreakBeforeMultilineStrings: false
+# AlwaysBreakTemplateDeclarations: true
+# BinPackArguments: true
+# BinPackParameters: true
+# BreakBeforeBinaryOperators: None
+# BreakBeforeBraces: Attach
+# BreakBeforeTernaryOperators: true
+# BreakConstructorInitializersBeforeComma: false
+# ColumnLimit: 80
+# ConstructorInitializerAllOnOneLineOrOnePerLine: true
+# ConstructorInitializerIndentWidth: 4
+# ContinuationIndentWidth: 4
+# Cpp11BracedListStyle: true
+# DerivePointerAlignment: false
+# DisableFormat: false
+# ExperimentalAutoDetectBinPacking: false
+# IndentCaseLabels: true
+IndentWidth: 4
+# IndentWrappedFunctionNames: false
+# KeepEmptyLinesAtTheStartOfBlocks: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass:      true
+  AfterControlStatement: true
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  AfterObjCDeclaration: true
+  AfterStruct:     true
+  AfterUnion:      true
+  BeforeCatch:     true
+  BeforeElse:      true
+  IndentBraces:    false
