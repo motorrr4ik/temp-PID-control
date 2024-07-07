@@ -30,4 +30,5 @@ void calculatePeltierPower(heating_cell_t *heating_cell)
         heating_cell->pid_regulator.current_error = 0 - heating_cell->temperature.difference;
         heating_cell->peltier.power               = calculateDutyCycle(&(heating_cell->pid_regulator));
     }
+    *(heating_cell->peltier.timer_channel) |= heating_cell->peltier.power;
 }
