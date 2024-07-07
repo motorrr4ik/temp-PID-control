@@ -7,6 +7,7 @@ void RCCSetUp(void)
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;  // GPIOC ports activation
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;   // TIM1 activation
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;   // TIM3 activation
+    RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;   // TIM3 activation
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN; // USART2 activation
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;   // DMA1 activation
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;   // DMA2 activation
