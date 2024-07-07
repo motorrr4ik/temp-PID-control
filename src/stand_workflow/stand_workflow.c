@@ -108,7 +108,15 @@ static void _handlePeriod(stand_workflow_t *stand)
 
 static void _calculateTemperatureEquation(stand_workflow_t *stand)
 {
-    // TO-DO: calculation algo needed
+    for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
+    {
+        // TO-DO: after debug check if macro constands are correct
+        int8_t voltage_value = stand->spi_adc.raw_spi_adc_data[i] * REF_VOLTAGE / MAX_ADC_VALUE;
+        stand->cells[i].temperature.current_temperature =
+            pow(voltage_value, 3) * stand->temperature_equation_coeffs[0] +
+            pow(voltage_value, 2) * stand->temperature_equation_coeffs[1] +
+            voltage_value * stand->temperature_equation_coeffs[2] + stand->temperature_equation_coeffs[3];
+    }
 }
 
 static void _calculateTemperature(stand_workflow_t *stand)
@@ -116,6 +124,8 @@ static void _calculateTemperature(stand_workflow_t *stand)
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
         _calculateTemperatureEquation(stand);
+        stand->cells[i].temperature.difference =
+            stand->cells[i].temperature.aim_temperature - stand->cells[i].temperature.current_temperature;
     }
 }
 
