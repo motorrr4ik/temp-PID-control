@@ -133,7 +133,7 @@ void calcaluteCellsPowerControl(stand_workflow_t *stand)
 {
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
-        calculatePeltierPower(&(stand->cells[i]));
+        calculatePeltierPower(stand->cells + i);
     }
 }
 
