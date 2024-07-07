@@ -36,6 +36,8 @@ typedef struct
 {
     int8_t if_enabled;
     int8_t cells_initiated;
+    int8_t current_cycle;
+    int8_t cycle_temperatures[CYCLES_NUMBER];
     float temperature_equation_coeffs[TEMP_CALC_COEFFS];
     spi_adc_data_t spi_adc;
     adc_data_t adc;
@@ -44,6 +46,8 @@ typedef struct
     heating_cell_t cells[HEATING_CELL_NUMBER];
 } stand_workflow_t;
 
+void calcaluteCellsPowerControl(stand_workflow_t *stand);
+void setStandParameters(stand_workflow_t *stand);
 void mainTask(stand_workflow_t *stand);
 static void _initCells(stand_workflow_t *stand);
 static void _calculateTemperature(stand_workflow_t *stand);
