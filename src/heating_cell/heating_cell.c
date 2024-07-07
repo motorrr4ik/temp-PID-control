@@ -32,3 +32,8 @@ void calculatePeltierPower(heating_cell_t *heating_cell)
     }
     *(heating_cell->peltier.timer_channel) |= heating_cell->peltier.power;
 }
+
+void disablePeltier(heating_cell_t *heating_cell)
+{
+    *(heating_cell->peltier.gpio_sw) = 0;
+}

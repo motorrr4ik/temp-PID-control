@@ -14,9 +14,9 @@ typedef enum
 
 typedef struct
 {
-    int8_t current_temperature;
-    int8_t aim_temperature;
-    int8_t difference;
+    float current_temperature;
+    float aim_temperature;
+    float difference;
 } temperature_state_t;
 
 typedef struct
@@ -46,5 +46,6 @@ typedef struct
 
 static void _switchPeltierMode(heating_cell_t *heating_cell);
 void calculatePeltierPower(heating_cell_t *heating_cell);
+void disablePeltier(heating_cell_t *heating_cell);
 
 #endif // HEATING_CELL
