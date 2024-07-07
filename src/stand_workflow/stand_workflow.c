@@ -38,17 +38,6 @@ static void _initCells(stand_workflow_t *stand)
                                    .pid_regulator = {.pid_enable_border_temperature = DEFAULT_PID_ENABLE_BORDER, 0},
                                    .status        = standby};
 
-    heating_cell_t third_cell   = {.cell_number   = 3,
-                                   .peltier       = {.power         = 0,
-                                                     .timer_channel = (uint32_t *)&(TIM1->CCR2),
-                                                     .gpio_sw       = (uint32_t *)&(GPIOB->BSRR),
-                                                     .cool_mode     = GPIO_BSRR_BS3,
-                                                     .heat_mode     = GPIO_BSRR_BR3},
-                                   .light         = {0},
-                                   .temperature   = {0},
-                                   .pid_regulator = {.pid_enable_border_temperature = DEFAULT_PID_ENABLE_BORDER, 0},
-                                   .status        = standby};
-
     heating_cell_t fourth_cell  = {.cell_number   = 4,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM1->CCR1),
@@ -130,8 +119,36 @@ static void _calculateTemperature(stand_workflow_t *stand)
     }
 }
 
+void calcaluteCellsPowerControl(stand_workflow_t *stand)
+{
+    for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
+    {
+        calculatePeltierPower(&(stand->cells[i]));
+    }
+}
+
+void setStandParameters(stand_workflow_t *stand)
+{
+    memcpy(stand->cycle_temperatures, stand->input_data.data_buff + 3, 3 * sizeof(int8_t));
+    for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
+    {
+        stand->cells[i].pid_regulator.pid_enable_border_temperature = stand->input_data.data_buff[0];
+        stand->cells[i].pid_regulator.k_p                           = stand->input_data.data_buff[1];
+        stand->cells[i].pid_regulator.k_i                           = stand->input_data.data_buff[2];
+        stand->cells[i].pid_regulator.k_d                           = stand->input_data.data_buff[3];
+        stand->cells[i].temperature.aim_temperature                 = stand->cycle_temperatures[stand->current_cycle];
+        stand->cells[i].temperature.difference =
+            stand->cells[i].temperature.aim_temperature - stand->cells[i].temperature.current_temperature;
+    }
+}
+
 void mainTask(stand_workflow_t *stand)
 {
+    if (!(stand->if_enabled))
+    {
+        return;
+    }
+
     if (!(stand->cells_initiated))
     {
         _initCells(stand);
