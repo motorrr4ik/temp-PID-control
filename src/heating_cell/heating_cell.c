@@ -1,6 +1,8 @@
 #include "heating_cell.h"
 #include "pid_regulator.h"
 
+static void _switchPeltierMode(heating_cell_t *heating_cell);
+
 static void _switchPeltierMode(heating_cell_t *heating_cell)
 {
     if (heating_cell->temperature.difference > 0)
@@ -19,6 +21,11 @@ static void _switchPeltierMode(heating_cell_t *heating_cell)
 
 void calculatePeltierPower(heating_cell_t *heating_cell)
 {
+    if (heating_cell->temperature.difference <= PID_SW_TEMP_DELTA)
+    {
+        heating_cell->status = freezed;
+        return;
+    }
     _switchPeltierMode(heating_cell);
     if (heating_cell->status == heating)
     {
@@ -36,4 +43,15 @@ void calculatePeltierPower(heating_cell_t *heating_cell)
 void disablePeltier(heating_cell_t *heating_cell)
 {
     *(heating_cell->peltier.gpio_sw) = 0;
+}
+
+uint16_t updateCycle(heating_cell_t *heating_cell)
+{
+    if (heating_cell->cycle_counter >= CYCLE_DURATION)
+    {
+        heating_cell->cycle_counter = 0;
+        heating_cell->status        = standby;
+        return 0;
+    }
+    return 1;
 }

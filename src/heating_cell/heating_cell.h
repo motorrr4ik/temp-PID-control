@@ -9,7 +9,8 @@ typedef enum
 {
     cooling = 0,
     heating = 1,
-    standby = 2
+    freezed = 2,
+    standby = 3
 } cell_status_e;
 
 typedef struct
@@ -37,6 +38,8 @@ typedef struct
 typedef struct
 {
     uint8_t cell_number;
+    uint8_t current_cycle;
+    uint8_t cycle_counter;
     peltier_state_t peltier;
     light_state_t light;
     temperature_state_t temperature;
@@ -44,8 +47,7 @@ typedef struct
     cell_status_e status;
 } heating_cell_t;
 
-static void _switchPeltierMode(heating_cell_t *heating_cell);
+uint16_t updateCycle(heating_cell_t *heating_cell);
 void calculatePeltierPower(heating_cell_t *heating_cell);
 void disablePeltier(heating_cell_t *heating_cell);
-
 #endif // HEATING_CELL
