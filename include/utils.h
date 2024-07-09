@@ -10,6 +10,7 @@
 #define DATA_BUFF_SIZE            200
 #define TEMP_CALC_COEFFS          4
 #define DEFAULT_PID_ENABLE_BORDER 5
+#define CYCLE_DURATION            60 // one cycle duration in seconds
 // Periphery macros
 #define SYSTEM_CORE_CLOCK         16000000
 #define TIM1_PSC                  160
