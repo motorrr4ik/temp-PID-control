@@ -130,6 +130,7 @@ static void _handleCycle(stand_workflow_t *stand)
                 stand->cells[i].temperature.difference          = 0;
                 stand->cells[i].temperature.aim_temperature     = 0;
                 stand->cells[i].temperature.current_temperature = 0;
+                stand->cells[i].cycle_counter                   = 0;
                 disablePeltier(&(stand->cells[i]));
             }
             else
