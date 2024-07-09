@@ -8,9 +8,10 @@
 typedef enum
 {
     cooling = 0,
-    heating = 1,
-    freezed = 2,
-    standby = 3
+    heating,
+    freezed,
+    standby,
+    finished
 } cell_status_e;
 
 typedef struct
