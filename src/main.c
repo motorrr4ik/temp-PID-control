@@ -44,9 +44,11 @@ void USART2_IRQHandler(void)
         {
         case stand_disable:
             disablePeriphery();
+            stand.if_enabled = 0;
             break;
         case stand_enable:
             enablePeriphery();
+            stand.if_enabled = 1;
             break;
         case stand_set_params:
             disablePeriphery();
