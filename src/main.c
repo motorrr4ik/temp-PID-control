@@ -33,6 +33,7 @@ void TIM4_IRQHandler(void)
 {
     TIM4->SR &= ~TIM_SR_UIF; // Reset interrupt flag
     calcaluteCellsPowerControl(&stand);
+    updateOutputPackage(&stand);
 }
 
 void USART2_IRQHandler(void)
