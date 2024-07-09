@@ -126,7 +126,10 @@ static void _handleCycle(stand_workflow_t *stand)
             stand->cells[i].current_cycle++;
             if (stand->cells[i].cycle_counter == CYCLES_NUMBER)
             {
-                stand->cells[i].status = standby;
+                stand->cells[i].status                          = finished;
+                stand->cells[i].temperature.difference          = 0;
+                stand->cells[i].temperature.aim_temperature     = 0;
+                stand->cells[i].temperature.current_temperature = 0;
                 disablePeltier(&(stand->cells[i]));
             }
             else
@@ -164,7 +167,7 @@ void calcaluteCellsPowerControl(stand_workflow_t *stand)
 {
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
-        if (stand->cells[i].status == freezed)
+        if (stand->cells[i].status == freezed || stand->cells[i].status == finished)
         {
             continue;
         }
@@ -175,7 +178,6 @@ void calcaluteCellsPowerControl(stand_workflow_t *stand)
 void setStandParameters(stand_workflow_t *stand)
 {
     memcpy(stand->cycle_temperatures, stand->input_data.data_buff + 3, 3 * sizeof(int8_t));
-    stand->cells_initiated = 0;
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
         stand->cells[i].pid_regulator.pid_enable_border_temperature = stand->input_data.data_buff[0];
