@@ -1,11 +1,19 @@
 #include "stand_workflow.h"
 #include "stm32f4xx.h"
+#include <math.h>
+#include <memory.h>
+
+static void _initCells(stand_workflow_t *stand);
+static void _calculateTemperature(stand_workflow_t *stand);
+static void _calculateTemperatureEquation(stand_workflow_t *stand);
+static void _handleCycle(stand_workflow_t *stand);
 
 static void _initCells(stand_workflow_t *stand)
 {
     // cells initiation - hardcode
     // to understand pins bindings check out ../pinout_info folder
     heating_cell_t first_cell   = {.cell_number   = 1,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM1->CCR4),
                                                      .gpio_sw       = (uint32_t *)&(GPIOC->BSRR),
@@ -17,6 +25,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t second_cell  = {.cell_number   = 2,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM1->CCR3),
                                                      .gpio_sw       = (uint32_t *)&(GPIOB->BSRR),
@@ -28,6 +37,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t third_cell   = {.cell_number   = 3,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM1->CCR2),
                                                      .gpio_sw       = (uint32_t *)&(GPIOB->BSRR),
@@ -39,6 +49,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t fourth_cell  = {.cell_number   = 4,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM1->CCR1),
                                                      .gpio_sw       = (uint32_t *)&(GPIOA->BSRR),
@@ -50,6 +61,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t fifth_cell   = {.cell_number   = 5,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM3->CCR2),
                                                      .gpio_sw       = (uint32_t *)&(GPIOB->BSRR),
@@ -61,6 +73,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t sixth_cell   = {.cell_number   = 6,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM3->CCR1),
                                                      .gpio_sw       = (uint32_t *)&(GPIOB->BSRR),
@@ -72,6 +85,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t seventh_cell = {.cell_number   = 7,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM3->CCR3),
                                                      .gpio_sw       = (uint32_t *)&(GPIOB->BSRR),
@@ -83,6 +97,7 @@ static void _initCells(stand_workflow_t *stand)
                                    .status        = standby};
 
     heating_cell_t eigth_cell   = {.cell_number   = 8,
+                                   .cycle_counter = 0,
                                    .peltier       = {.power         = 0,
                                                      .timer_channel = (uint32_t *)&(TIM3->CCR4),
                                                      .gpio_sw       = (uint32_t *)&(GPIOA->BSRR),
@@ -102,8 +117,24 @@ static void _initCells(stand_workflow_t *stand)
     stand->cells[7]             = eigth_cell;
 }
 
-static void _handlePeriod(stand_workflow_t *stand)
+static void _handleCycle(stand_workflow_t *stand)
 {
+    for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
+    {
+        if (!updateCycle(&(stand->cells[i])))
+        {
+            stand->cells[i].current_cycle++;
+            if (stand->cells[i].cycle_counter == CYCLES_NUMBER)
+            {
+                stand->cells[i].status = standby;
+                disablePeltier(&(stand->cells[i]));
+            }
+            else
+            {
+                stand->cells[i].temperature.aim_temperature = stand->cycle_temperatures[stand->cells[i].current_cycle];
+            }
+        }
+    }
 }
 
 static void _calculateTemperatureEquation(stand_workflow_t *stand)
@@ -111,10 +142,10 @@ static void _calculateTemperatureEquation(stand_workflow_t *stand)
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
         // TO-DO: after debug check if macro constands are correct
-        int8_t voltage_value = stand->spi_adc.raw_spi_adc_data[i] * REF_VOLTAGE / MAX_ADC_VALUE;
+        float voltage_value = stand->spi_adc.raw_spi_adc_data[i] * REF_VOLTAGE / MAX_ADC_VALUE;
         stand->cells[i].temperature.current_temperature =
-            pow(voltage_value, 3) * stand->temperature_equation_coeffs[0] +
-            pow(voltage_value, 2) * stand->temperature_equation_coeffs[1] +
+            powf(voltage_value, 3) * stand->temperature_equation_coeffs[0] +
+            powf(voltage_value, 2) * stand->temperature_equation_coeffs[1] +
             voltage_value * stand->temperature_equation_coeffs[2] + stand->temperature_equation_coeffs[3];
     }
 }
@@ -133,20 +164,25 @@ void calcaluteCellsPowerControl(stand_workflow_t *stand)
 {
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
-        calculatePeltierPower(stand->cells + i);
+        if (stand->cells[i].status == freezed)
+        {
+            continue;
+        }
+        calculatePeltierPower(&(stand->cells[i]));
     }
 }
 
 void setStandParameters(stand_workflow_t *stand)
 {
     memcpy(stand->cycle_temperatures, stand->input_data.data_buff + 3, 3 * sizeof(int8_t));
+    stand->cells_initiated = 0;
     for (int8_t i = 0; i < HEATING_CELL_NUMBER; ++i)
     {
         stand->cells[i].pid_regulator.pid_enable_border_temperature = stand->input_data.data_buff[0];
         stand->cells[i].pid_regulator.k_p                           = stand->input_data.data_buff[1];
         stand->cells[i].pid_regulator.k_i                           = stand->input_data.data_buff[2];
         stand->cells[i].pid_regulator.k_d                           = stand->input_data.data_buff[3];
-        stand->cells[i].temperature.aim_temperature                 = stand->cycle_temperatures[stand->current_cycle];
+        stand->cells[i].temperature.aim_temperature = stand->cycle_temperatures[stand->cells[i].current_cycle];
         stand->cells[i].temperature.difference =
             stand->cells[i].temperature.aim_temperature - stand->cells[i].temperature.current_temperature;
     }
@@ -164,5 +200,6 @@ void mainTask(stand_workflow_t *stand)
         _initCells(stand);
         stand->cells_initiated = 1;
     }
+    _handleCycle(stand);
     _calculateTemperature(stand);
 }
