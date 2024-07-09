@@ -45,6 +45,7 @@ typedef struct
     heating_cell_t cells[HEATING_CELL_NUMBER];
 } stand_workflow_t;
 
+void updateOutputPackage(stand_workflow_t *stand);
 void calcaluteCellsPowerControl(stand_workflow_t *stand);
 void setStandParameters(stand_workflow_t *stand);
 void mainTask(stand_workflow_t *stand);

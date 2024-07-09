@@ -191,6 +191,21 @@ void setStandParameters(stand_workflow_t *stand)
     }
 }
 
+void updateOutputPackage(stand_workflow_t *stand)
+{
+    sprintf(stand->output_data,
+            "C1 t=%f, l=%d\n C2 t=%f, l=%d\n C3 t=%f, l=%d\n C4 t=%f, l=%d\n C5 t=%f, l=%d\n C6 t=%f, l=%d\n C7 t=%f, "
+            "l=%d\n C8 t=%f, l=%d\n",
+            stand->cells[0].temperature.current_temperature, stand->cells[0].light.light_value,
+            stand->cells[1].temperature.current_temperature, stand->cells[1].light.light_value,
+            stand->cells[2].temperature.current_temperature, stand->cells[2].light.light_value,
+            stand->cells[3].temperature.current_temperature, stand->cells[3].light.light_value,
+            stand->cells[4].temperature.current_temperature, stand->cells[4].light.light_value,
+            stand->cells[5].temperature.current_temperature, stand->cells[5].light.light_value,
+            stand->cells[6].temperature.current_temperature, stand->cells[6].light.light_value,
+            stand->cells[7].temperature.current_temperature, stand->cells[7].light.light_value);
+}
+
 void mainTask(stand_workflow_t *stand)
 {
     if (!(stand->if_enabled))
